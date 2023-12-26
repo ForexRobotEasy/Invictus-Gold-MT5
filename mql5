@@ -1,0 +1,79 @@
+
+// Program: Invictus Gold MT5
+// Developer: Forex Robot Easy Team
+// Website: forexroboteasy.com
+
+// Include necessary libraries
+#include <Trade\PositionInfo.mqh>
+
+// Declare global variables
+double lotSize = 0.01; // Initial lot size
+double stopLoss = 50; // Stop loss level
+double takeProfit = 100; // Take profit level
+
+// Define trade entry function
+void TradeEntry()
+{
+   // Get market depth data
+   double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+   
+   // Calculate Bollinger Bands
+   double upperBand, middleBand, lowerBand;
+   iBands(_Symbol, _Period, 20, 2, 0, PRICE_CLOSE, upperBand, middleBand, lowerBand);
+   
+   // Filter out false entries
+   if (bid < lowerBand && ask > upperBand)
+   {
+      // Place a buy order
+      int ticket = OrderSend(_Symbol, OP_BUY, lotSize, ask, 0, bid - stopLoss * _Point, bid + takeProfit * _Point, 'Invictus Gold MT5', 0, 0, clrGreen);
+      
+      if (ticket > 0)
+      {
+         Print('Buy order placed successfully');
+      }
+      else
+      {
+         Print('Error placing buy order: ', GetLastError());
+      }
+   }
+}
+
+// Define trade exit function
+void TradeExit()
+{
+   // Get current position
+   CPositionInfo position;
+   if (!position.SelectByTicket(_Ticket))
+   {
+      Print('Error selecting position: ', GetLastError());
+      return;
+   }
+   
+   // Close the position
+   bool result = position.Close();
+   if (result)
+   {
+      Print('Position closed successfully');
+   }
+   else
+   {
+      Print('Error closing position: ', GetLastError());
+   }
+}
+
+// Define main function
+void OnTick()
+{
+   // Check if there is an open position
+   if (_Ticket != 0)
+   {
+      // Execute trade exit function
+      TradeExit();
+   }
+   else
+   {
+      // Execute trade entry function
+      TradeEntry();
+   }
+}
